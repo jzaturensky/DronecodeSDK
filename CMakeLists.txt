@@ -30,13 +30,17 @@ endif()
 option(BUILD_TESTS "Build tests" ON)
 
 include(cmake/compiler_flags.cmake)
+find_package(CURL REQUIRED)
+find_package(tinyxml2 REQUIRED)
+#set(CURL_LIBRARY "curl")
+
 #include(cmake/curl.cmake)
 #include(cmake/tinyxml2.cmake)
 #include(cmake/zlib.cmake)
 
 if(NOT MSVC)
     cmake_policy(SET CMP0058 NEW)
-    include(third_party/cpp_rsc/cmake/modules/cpp_resource.cmake)
+    include(${CMAKE_CURRENT_SOURCE_DIR}/third_party/cpp_rsc/cmake/modules/cpp_resource.cmake)
     if(NOT ANDROID AND NOT IOS)
         # If not cross-compiling, we can build cpp_rsc.
         add_subdirectory(third_party/cpp_rsc/src EXCLUDE_FROM_ALL)

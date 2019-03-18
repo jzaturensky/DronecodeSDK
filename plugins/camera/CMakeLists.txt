@@ -19,7 +19,8 @@ add_library(dronecode_sdk_camera ${PLUGIN_LIBRARY_TYPE}
 
 target_link_libraries(dronecode_sdk_camera
     dronecode_sdk
-    ${TINYXML2_LIBRARY}
+    tinyxml2::tinyxml2
+    #${TINYXML2_LIBRARY}
     ${CURL_LIBRARY}
 )
 
@@ -27,9 +28,9 @@ set_target_properties(dronecode_sdk_camera
     PROPERTIES COMPILE_FLAGS ${warnings}
 )
 
-include_directories(
-    ${CURL_INCLUDE_DIRS}
-)
+#target_include_directories(dronecode_sdk_camera
+#    ${CURL_INCLUDE_DIRS}
+#)
 
 install(FILES
     include/plugins/camera/camera.h
