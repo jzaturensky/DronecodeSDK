@@ -29,9 +29,11 @@ endif()
 
 option(BUILD_TESTS "Build tests" ON)
 
+#set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)
 include(cmake/compiler_flags.cmake)
 find_package(CURL REQUIRED)
 find_package(tinyxml2 REQUIRED)
+find_package(ZLIB REQUIRED)
 #set(CURL_LIBRARY "curl")
 
 #include(cmake/curl.cmake)
