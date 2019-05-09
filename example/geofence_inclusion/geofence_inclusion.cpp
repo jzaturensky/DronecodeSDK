@@ -31,7 +31,7 @@ using namespace std::placeholders; // for `_1`
 using namespace std::chrono; // for seconds(), milliseconds()
 using namespace std::this_thread; // for sleep_for()
 
-static void receive_send_geofence_result(Geofence::Result result);
+//static void receive_send_geofence_result(Geofence::Result result);
 static Geofence::Polygon::Point add_point(double latitude_deg, double longitude_deg);
 
 void usage(std::string bin_name)
@@ -129,7 +129,36 @@ int main(int argc, char **argv)
     polygons2.push_back(new_polygon2);
 
     std::cout << "Uploading geofence..." << std::endl;
-    geofence->send_geofence_async(polygons, std::bind(&receive_send_geofence_result, _1));
+    //geofence->send_geofence_async(polygons, std::bind(&receive_send_geofence_result, _1));
+    
+    geofence->send_geofence_async(polygons, [action, telemetry](Geofence::Result result) {
+        if (result == Geofence::Result::SUCCESS) {
+            std::cout << "Geofence uploaded!!!." << std::endl;
+        } else if (result == Geofence::Result::VIOLATION) {
+            std::cout << "Got violation!!!" << std::endl;
+            std::cout << "Landing..." << std::endl;
+            const Action::Result land_result = action->land();
+            if (land_result != Action::Result::SUCCESS) {
+                std::cout << ERROR_CONSOLE_TEXT << "Land failed:" << Action::result_str(land_result)
+                          << NORMAL_CONSOLE_TEXT << std::endl;
+                exit(1);
+            }
+
+            // Check if vehicle is still in air
+            while (telemetry->in_air()) {
+                std::cout << "Vehicle is landing..." << std::endl;
+                sleep_for(seconds(1));
+            }
+            std::cout << "Landed!" << std::endl;
+
+            // We are relying on auto-disarming but let's keep watching the telemetry for a bit longer.
+            sleep_for(seconds(3));
+            std::cout << "Finished..." << std::endl;
+
+            exit(0);
+        }
+    });
+
     sleep_for(seconds(5));
 
     // Arm vehicle
@@ -152,13 +181,13 @@ int main(int argc, char **argv)
     }
 
     // Let it hover for a bit before landing again.
-    sleep_for(seconds(10));
+    sleep_for(seconds(30));
 
-    std::cout << "Uploading geofence..." << std::endl;
-    geofence->send_geofence_async(polygons2, std::bind(&receive_send_geofence_result, _1));
-    sleep_for(seconds(5));
+    // std::cout << "Uploading geofence..." << std::endl;
+    // geofence->send_geofence_async(polygons2, std::bind(&receive_send_geofence_result, _1));
+    // sleep_for(seconds(5));
 
-    sleep_for(seconds(10));
+    // sleep_for(seconds(30));
 
     std::cout << "Landing..." << std::endl;
     const Action::Result land_result = action->land();
@@ -182,14 +211,14 @@ int main(int argc, char **argv)
     return 0;
 }
 
-void receive_send_geofence_result(Geofence::Result result)
-{
-    if (result == Geofence::Result::SUCCESS) {
-        std::cout << "Geofence uploaded." << std::endl;
-    } else if (result == Geofence::Result::VIOLATION) {
-        std::cout << "Got violation!!!" << std::endl;
-    }
-}
+// void receive_send_geofence_result(Geofence::Result result)
+// {
+//     if (result == Geofence::Result::SUCCESS) {
+//         std::cout << "Geofence uploaded." << std::endl;
+//     } else if (result == Geofence::Result::VIOLATION) {
+//         std::cout << "Got violation!!!" << std::endl;
+//     }
+// }
 
 Geofence::Polygon::Point add_point(double latitude_deg, double longitude_deg)
 {
