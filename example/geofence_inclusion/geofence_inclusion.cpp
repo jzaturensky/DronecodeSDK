@@ -3,10 +3,8 @@
  *
  * @brief Demonstrates how to Add & Upload geofence missions using the Dronecode SDK.
  * The example is summarised below:
- * 1. Adds mission items.
- * 2. Starts mission from first mission item.
- * 3. Illustrates Pause/Resume mission item.
- * 4. Exits after the mission is accomplished.
+ * 1. Adds points to geofence.
+ * 2. Uploads the geofence mission.
  *
  * @author Jonathan Zaturensky <jonathan@airmap.com>,
  * @date 2019-05-09
@@ -34,9 +32,7 @@ using namespace std::chrono; // for seconds(), milliseconds()
 using namespace std::this_thread; // for sleep_for()
 
 static void receive_send_geofence_result(Geofence::Result result);
-
 static Geofence::Polygon::Point add_point(double latitude_deg, double longitude_deg);
-static std::atomic<bool> _got_result{false};
 
 void usage(std::string bin_name)
 {
@@ -112,6 +108,12 @@ int main(int argc, char **argv)
     points.push_back(add_point(47.39626761, 8.54527193));
     points.push_back(add_point(47.39980072, 8.54736050));
 
+    std::vector<Geofence::Polygon::Point> points2;
+    points2.push_back(add_point(47.29929240, 8.54296524));
+    points2.push_back(add_point(47.39696482, 8.54161340));
+    points2.push_back(add_point(47.39626761, 8.54527193));
+    points2.push_back(add_point(47.39980072, 8.54736050));
+
     std::vector<std::shared_ptr<Geofence::Polygon>> polygons;
     std::shared_ptr<Geofence::Polygon> new_polygon(new Geofence::Polygon());
     new_polygon->type = Geofence::Polygon::Type::INCLUSION;
@@ -119,14 +121,16 @@ int main(int argc, char **argv)
 
     polygons.push_back(new_polygon);
 
-    geofence->send_geofence_async(polygons, std::bind(&receive_send_geofence_result, _1));
+    std::vector<std::shared_ptr<Geofence::Polygon>> polygons2;
+    std::shared_ptr<Geofence::Polygon> new_polygon2(new Geofence::Polygon());
+    new_polygon2->type = Geofence::Polygon::Type::INCLUSION;
+    new_polygon2->points = points2;
 
-    for (unsigned i = 0; i < 5; ++i) {
-        if (_got_result) {
-            break;
-        }
-        sleep_for(seconds(1));
-    }
+    polygons2.push_back(new_polygon2);
+
+    std::cout << "Uploading geofence..." << std::endl;
+    geofence->send_geofence_async(polygons, std::bind(&receive_send_geofence_result, _1));
+    sleep_for(seconds(5));
 
     // Arm vehicle
     std::cout << "Arming..." << std::endl;
@@ -148,7 +152,13 @@ int main(int argc, char **argv)
     }
 
     // Let it hover for a bit before landing again.
-    sleep_for(seconds(30));
+    sleep_for(seconds(10));
+
+    std::cout << "Uploading geofence..." << std::endl;
+    geofence->send_geofence_async(polygons2, std::bind(&receive_send_geofence_result, _1));
+    sleep_for(seconds(5));
+
+    sleep_for(seconds(10));
 
     std::cout << "Landing..." << std::endl;
     const Action::Result land_result = action->land();
@@ -175,10 +185,9 @@ int main(int argc, char **argv)
 void receive_send_geofence_result(Geofence::Result result)
 {
     if (result == Geofence::Result::SUCCESS) {
-        _got_result = true;
-        std::cout << "Got result\n";
+        std::cout << "Geofence uploaded." << std::endl;
     } else if (result == Geofence::Result::VIOLATION) {
-        std::cout << "Got violation!!!\n";
+        std::cout << "Got violation!!!" << std::endl;
     }
 }
 
