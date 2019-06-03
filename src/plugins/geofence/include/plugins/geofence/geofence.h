@@ -44,7 +44,8 @@ public:
         BUSY, /**< @brief %Vehicle busy. */
         TIMEOUT, /**< @brief Request timed out. */
         INVALID_ARGUMENT, /**< @brief Invalid argument. */
-        UNKNOWN /**< @brief %Request succeeded. */
+        UNKNOWN, /**< @brief %Request succeeded. */
+        VIOLATION /**< @brief Geofence violation. */
     };
 
     /**

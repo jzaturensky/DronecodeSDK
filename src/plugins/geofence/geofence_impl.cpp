@@ -165,6 +165,24 @@ void GeofenceImpl::process_mission_ack(const mavlink_message_t &message)
     }
 }
 
+void GeofenceImpl::process_geofence_violation(const mavlink_message_t &message)
+{
+    mavlink_statustext_t statustext;
+    mavlink_msg_statustext_decode(&message, &statustext);
+
+    if (statustext.severity == MAV_SEVERITY_CRITICAL) {
+        // statustext.text is not null terminated, therefore we copy it first to
+        // an array big enough that is zeroed.
+        char text_with_null[sizeof(statustext.text) + 1]{};
+        memcpy(text_with_null, statustext.text, sizeof(statustext.text));
+
+        if (strstr(text_with_null, "Geofence violation")) {
+            LogDebug() << "GOT GEOFENCE VIOLATION";
+            report_geofence_result(_result_callback, Geofence::Result::VIOLATION);
+        }
+    }
+}
+
 void GeofenceImpl::assemble_mavlink_messages(
     const std::vector<std::shared_ptr<Geofence::Polygon>> &polygons)
 {
